@@ -1,0 +1,13 @@
+{
+  "name": "bstudres-boot",
+  "version": "1.0.0",
+  "description": "Simple way to add script to install better studres extension on lab pc startup",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "bstudres-boot": "index.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
