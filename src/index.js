@@ -34,7 +34,7 @@ if (fs.existsSync(scriptPath)) {
 
       if (removeAnswer === "y") {
         fs.unlinkSync(scriptPath);
-        console.log(`❌ Removed startup script: ${scriptPath}`);
+        console.log(`🗑️ Removed startup script: ${scriptPath}`);
         console.log("Better Studres will no longer install on startup.");
       } else {
         console.log("✅ Keeping existing setup. No changes made.");
@@ -58,8 +58,38 @@ if (fs.existsSync(scriptPath)) {
     }
 
     const scriptContent = `#!/bin/bash
-echo "Installing Better Studres in Firefox..."
-firefox --install-extension --headless "https://addons.mozilla.org/firefox/downloads/latest/better-studres/addon-latest.xpi"
+# Wait for Firefox to initialize the profile
+sleep 2
+
+# Detect the active Firefox profile dynamically
+FIREFOX_PROFILE=$(grep "Path=" ~/.mozilla/firefox/profiles.ini | cut -d '=' -f2 | tail -n1)
+
+if [[ -z "$FIREFOX_PROFILE" ]]; then
+    echo "❌ No Firefox profile found. Try opening Firefox first."
+    exit 1
+fi
+
+EXTENSIONS_FILE="$HOME/.mozilla/firefox/$FIREFOX_PROFILE/extensions.json"
+
+# Install an extension if \`extensions.json\` does not exist
+if [[ ! -f "$EXTENSIONS_FILE" ]]; then
+    echo "⚠️ No extensions.json found. Installing Better Studres extension..."
+    wget -O "$HOME/.mozilla/firefox/$FIREFOX_PROFILE/extensions/better-studres.xpi" "https://addons.mozilla.org/firefox/downloads/latest/better-studres/addon-latest.xpi"
+
+    echo "🔄 Restarting Firefox to apply changes..."
+    firefox --headless --profile "$HOME/.mozilla/firefox/$FIREFOX_PROFILE" &>/dev/null &
+    
+    sleep 3  # Give Firefox time to apply the extension
+fi
+
+# Now, list installed extensions
+if [[ -f "$EXTENSIONS_FILE" ]]; then
+    echo "🔍 Listing installed Firefox extensions:"
+    cat "$EXTENSIONS_FILE" | jq '.addons[] | {id, name, version}'
+else
+    echo "⚠️ Still no extensions.json found after installation. Try restarting Firefox manually."
+fi
+
 `;
 
     fs.writeFileSync(scriptPath, scriptContent, { mode: 0o755 });
