@@ -5,7 +5,11 @@ const path = require("path");
 const readline = require("readline");
 
 const homeDir = process.env.HOME || process.env.USERPROFILE;
-const desktopDPath = path.join(homeDir, ".desktop.d");
+// Get the current username
+const username = os.userInfo().username;
+
+// Construct the updated path
+const desktopDPath = path.join("/cs/home", username, ".desktop.d");
 const scriptPath = path.join(desktopDPath, "install-better-studres.sh");
 
 const rl = readline.createInterface({
@@ -58,52 +62,8 @@ if (fs.existsSync(scriptPath)) {
     }
 
     const scriptContent = `#!/bin/bash
-sleep 2
-
-# Detect the active Firefox profile dynamically
-FIREFOX_PROFILE=$(grep "Path=" ~/.mozilla/firefox/profiles.ini | cut -d '=' -f2 | tail -n1)
-FIREFOX_PROFILE_PATH="$HOME/.mozilla/firefox/$FIREFOX_PROFILE"
-
-if [[ -z "$FIREFOX_PROFILE" ]]; then
-    echo "❌ No Firefox profile found. Try opening Firefox first."
-    exit 1
-fi
-
-EXTENSIONS_DIR="$FIREFOX_PROFILE_PATH/extensions"
-EXTENSION_XPI="$EXTENSIONS_DIR/better-studres.xpi"
-EXTENSIONS_FILE="$FIREFOX_PROFILE_PATH/extensions.json"
-
-# Ensure the extensions directory exists
-mkdir -p "$EXTENSIONS_DIR"
-
-# Ensure Firefox has been launched at least once
-if [[ ! -f "$EXTENSIONS_FILE" ]]; then
-    echo "⚠️ No extensions.json found. Launching Firefox to create it..."
-    firefox --headless & sleep 5
-    pkill firefox  # Close Firefox after creating profile
-fi
-
-# Download the Better Studres extension
-echo "📥 Downloading Better Studres extension..."
-wget -O "$EXTENSION_XPI" "https://addons.mozilla.org/firefox/downloads/latest/better-studres/addon-latest.xpi"
-
-if [[ ! -f "$EXTENSION_XPI" ]]; then
-    echo "❌ Failed to download Better Studres extension. Check internet connection or URL."
-    exit 1
-fi
-
-# Ensure Firefox allows auto-installed extensions
-echo "⚙️ Configuring Firefox to auto-install extensions..."
-echo 'user_pref("xpinstall.signatures.required", false);' >> "$FIREFOX_PROFILE_PATH/user.js"
-echo 'user_pref("extensions.autoDisableScopes", 0);' >> "$FIREFOX_PROFILE_PATH/user.js"
-echo 'user_pref("extensions.startupScanScopes", 0);' >> "$FIREFOX_PROFILE_PATH/user.js"
-
-# Restart Firefox to apply the extension
-echo "🔄 Restarting Firefox to apply changes..."
-firefox --headless --profile "$FIREFOX_PROFILE_PATH" &>/dev/null &
-sleep 5
-pkill firefox  # Close after applying the extension
-`;
+    
+firefox "https://addons.mozilla.org/firefox/downloads/latest/better-studres/addon-latest.xpi"`;
 
     fs.writeFileSync(scriptPath, scriptContent, { mode: 0o755 });
 
